@@ -1,9 +1,9 @@
 import base64
-import json
-from data import skilltree
+
+from PoBExporter._fetch import skilltree
 
 
-def get_passive_tree_url(classId: int, ascendClassId: int, allocNodes: list[str], masterySelections: dict[str, int]) -> str:
+def get_passive_tree_url(classId: int, ascendClassId: int, allocNodes: list[int], masterySelections: dict[str, int]) -> str:
     data = [0, 0, 0, 6, classId,  ascendClassId]
     node_count = 0
     cluster_count = 0
@@ -44,5 +44,4 @@ def get_passive_tree_url(classId: int, ascendClassId: int, allocNodes: list[str]
     data.extend(mastery_node_ids)
     encoded_data = base64.urlsafe_b64encode(bytes(data)).decode('utf-8')
     final_data = encoded_data.replace("+", "-").replace("/", "_")
-
     return "https://www.pathofexile.com/passive-skill-tree/" + final_data

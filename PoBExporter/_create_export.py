@@ -1,20 +1,25 @@
 import base64
-import json
-import zlib
-
-from item import set_gems, get_item_text, get_slot, get_slots
-from passive_encode import get_passive_tree_url
-from schema import Character
-
 import xml.etree.ElementTree as ET
-from data import coordinate_to_jewel_hash, ascendancy_class_to_base_class, base_class_to_class_id, ascendancy_class_to_ascendancy_class_id
+import zlib
+from typing import NamedTuple
+
+from PoBExporter._fetch import (
+    ascendancy_class_to_ascendancy_class_id,
+    ascendancy_class_to_base_class,
+    base_class_to_class_id,
+    coordinate_to_jewel_hash,
+)
+from PoBExporter._item import get_item_text, get_slot, get_slots, set_gems
+from PoBExporter._passive_encode import get_passive_tree_url
+from PoBExporter._schema import Character
 
 
-with open("character.json", "r") as file:
-    character: Character = json.load(file)
+class PoBReturn(NamedTuple):
+    pob_string: str
+    primary_skill_name: str
 
 
-def create_pob_string(character: Character) -> str:
+def create_pob_string(character: Character) -> PoBReturn:
     if character["class"] in ascendancy_class_to_base_class:
         base_class = ascendancy_class_to_base_class[character["class"]]
         ascendant_class = character["class"]
@@ -22,8 +27,8 @@ def create_pob_string(character: Character) -> str:
         ascendancy_class_id = ascendancy_class_to_ascendancy_class_id[ascendant_class]
     else:
         base_class = character["class"]
-        ascendant_class = "nil"
-        class_id = base_class_to_class_id
+        ascendant_class = "None"
+        class_id = base_class_to_class_id[base_class]
         ascendancy_class_id = "nil"
 
     root = ET.Element("PathOfBuilding")
@@ -32,9 +37,9 @@ def create_pob_string(character: Character) -> str:
         "Build",
         level=str(character["level"]),
         targetVersion="3_0",
-        pantheonMajorGod=character["passives"]["pantheon_major"],
-        pantheonMinorGod=character["passives"]["pantheon_minor"],
-        bandit=character["passives"]["bandit_choice"],
+        pantheonMajorGod=character["passives"].get("pantheon_major") or "None",
+        pantheonMinorGod=character["passives"].get("pantheon_minor") or "None",
+        bandit=character["passives"].get("bandit_choice") or "None",
         className=base_class,
         ascendClassName=ascendant_class,
         characterLevelAutoMode="false",
@@ -49,7 +54,6 @@ def create_pob_string(character: Character) -> str:
         devotionVariant1="1"
     )
     tree = ET.SubElement(root, "Tree", activeSpec="1")
-
     spec = ET.SubElement(
         tree,
         "Spec",
@@ -61,9 +65,8 @@ def create_pob_string(character: Character) -> str:
         secondaryAscendClassId="nil",
         treeVersion="_".join(character["metadata"]["version"].split(".")[:2]),
     )
-    ET.SubElement(spec, "URL").text = get_passive_tree_url(int(class_id), int(ascendancy_class_id),
+    ET.SubElement(spec, "URL").text = get_passive_tree_url(int(class_id), 0 if ascendancy_class_id == "nil" else int(ascendancy_class_id),
                                                            character["passives"]["hashes"], character["passives"]["mastery_effects"])
-
     jewel_sockets = ET.SubElement(spec, "Sockets")
     items = ET.SubElement(root, "Items", activeItemSet="1",
                           showStatDifferences="true", useSecondWeaponSet="nil")
@@ -82,15 +85,12 @@ def create_pob_string(character: Character) -> str:
                       nodeId=node_id, name=f"Jewel {node_id}")
         item_id += 1
 
-    skills = ET.SubElement(root, "Skills", sortGemsByDPSField="CombinedDPS",
-                           activeSkillSet="1", sortGemsByDPS="true", defaultGemQuality="0", defaultGemLevel="normalMaximum", showSupportGemTypes="ALL", showAltQualityGems="false")
-    skillset = ET.SubElement(skills, "SkillSet", id="1")
+    primary_skill_name = set_gems(character, root)
 
     for item in character["equipment"]:
         if item["inventoryId"] in ["Weapon2", "Offhand2"]:
             continue
 
-        set_gems(item, skillset)
         ET.SubElement(items, "Item", id=str(item_id)
                       ).text = get_item_text(item)
         item_slots[get_slot(item)] = str(item_id)
@@ -103,7 +103,4 @@ def create_pob_string(character: Character) -> str:
                   zoomY="0", zoomLevel="3", showStatDifferences="true", zoomX="0")
     pob_string = base64.urlsafe_b64encode(
         zlib.compress(ET.tostring(root))).decode('utf-8')
-    return pob_string
-
-
-create_pob_string(character)
+    return PoBReturn(pob_string, primary_skill_name)

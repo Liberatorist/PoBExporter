@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "ms-python.isort",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "zxh404.vscode-proto3",
+        "Seaube.clangformat",
+        "thejustinwalsh.textproto-grammer"
+    ]
+}
