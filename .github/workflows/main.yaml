@@ -1,0 +1,46 @@
+name: pypi deploy
+on:
+  push:
+    branches:
+      - main
+env:
+  PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+jobs:
+  deploy:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@master
+        with:
+          python-version: 3.12
+      - name: Install poetry
+        run: |
+          curl -sSL "https://install.python-poetry.org/" | python
+          # Adding `poetry` to `$PATH`:
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Set up cache
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install
+
+      - name: Fetch data
+        run: |
+          poetry run python PoBExporter/_fetch.py
+
+      - name: Build
+        run: |
+          poetry run python -m build
+      - name: Publish
+        run: |
+          poetry run python -m twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

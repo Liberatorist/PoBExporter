@@ -10,7 +10,7 @@ URL = "https://github.com/Liberatorist/PoBExporter"
 EMAIL = ""
 AUTHOR = "Liberatorist"
 REQUIRES_PYTHON = ">=3.11.0"
-VERSION = "3.25.12"
+VERSION = "3.25.14"
 
 # What packages are required for this module to be executed?
 REQUIRED = []

@@ -11,7 +11,7 @@ profile = "black"
 
 [tool.poetry]
 name = "PoBExporter"
-version = "3.25.1"
+version = "3.25.13"
 description = "Python library to generate Path of Building exports directly from PoE API without running PoB headless"
 authors = ["Liberatorist"]
 license = "MIT"
@@ -20,6 +20,8 @@ readme = "README.md"
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.11"
 lzip = "1.2.0"
 requests = "^2.26.0"
+build = "^1.2.2"
+twine = "^5.1.1"

@@ -84,6 +84,17 @@ def set_gems(character: Character, root: ET.Element):
     gem_groups: list[tuple[list[dict], str]] = []
     for item in character["equipment"]:
         gem_groups.extend(get_gem_groups(item))
+    skills = ET.SubElement(root, "Skills",
+                           sortGemsByDPSField="CombinedDPS",
+                           activeSkillSet="1",
+                           sortGemsByDPS="true",
+                           defaultGemQuality="0",
+                           defaultGemLevel="normalMaximum",
+                           showSupportGemTypes="ALL",
+                           showAltQualityGems="false")
+
+    if len(gem_groups) == 0:
+        return ""
 
     max_num_supports = 0
     primary_skill_id = -1
@@ -96,16 +107,8 @@ def set_gems(character: Character, root: ET.Element):
             primary_skill_id = idx
             primary_skill_name = skill_gems[0]["nameSpec"]
 
-    skills = ET.SubElement(root, "Skills",
-                           sortGemsByDPSField="CombinedDPS",
-                           activeSkillSet="1",
-                           sortGemsByDPS="true",
-                           defaultGemQuality="0",
-                           defaultGemLevel="normalMaximum",
-                           showSupportGemTypes="ALL",
-                           showAltQualityGems="false")
-
     skillset = ET.SubElement(skills, "SkillSet", id="1")
+
     gem_groups.insert(0, gem_groups.pop(primary_skill_id))
     for idx, (gems, slot) in enumerate(gem_groups):
         skill = ET.SubElement(skillset, "Skill", {
